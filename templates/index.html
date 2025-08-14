@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Jigsaw Puzzle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: linear-gradient(135deg, #E0F2F1 0%, #F8BBD9 100%);
+            --bg-secondary: #FFFFFF;
+            --bg-card: rgba(255, 255, 255, 0.9);
+            --text-primary: #2D3748;
+            --text-secondary: #718096;
+            --accent: linear-gradient(135deg, #81D4FA 0%, #A5D6A7 100%);
+            --accent-hover: linear-gradient(135deg, #4FC3F7 0%, #81C784 100%);
+            --success: #48BB78;
+            --warning: #ED8936;
+            --border: #E2E8F0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #26C6DA 0%, #AB47BC 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-label {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38A169;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #DD6B20;
+            transform: translateY(-1px);
+        }
+
+        .select {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .select:focus {
+            outline: none;
+            border-color: #26C6DA;
+            box-shadow: 0 0 0 3px rgba(38, 198, 218, 0.1);
+        }
+
+        /* Image Gallery */
+        .image-gallery {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+        }
+
+        .gallery-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .gallery-item {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+
+        .gallery-item.selected {
+            border-color: #26C6DA;
+            box-shadow: 0 0 0 4px rgba(38, 198, 218, 0.2);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Game Stats */
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #26C6DA;
+            display: block;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Game Container */
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .puzzle-container {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+        }
+
+        .puzzle-grid {
+            display: grid;
+            gap: 2px;
+            background: var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 0 auto;
+            width: fit-content;
+        }
+
+        .puzzle-piece {
+            width: 80px;
+            height: 80px;
+            background-size: cover;
+            background-repeat: no-repeat;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .puzzle-piece:hover {
+            transform: scale(1.05);
+            z-index: 10;
+            border-radius: 4px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .puzzle-piece.selected {
+            border-color: #26C6DA;
+            transform: scale(1.08);
+            z-index: 10;
+            border-radius: 4px;
+            box-shadow: 0 0 0 4px rgba(38, 198, 218, 0.3);
+        }
+
+        .puzzle-piece.correct {
+            animation: correctPulse 0.6s ease;
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); background-color: rgba(72, 187, 120, 0.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Reference Image */
+        .reference-container {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            width: fit-content;
+        }
+
+        .reference-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .reference-image {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Victory Modal */
+        .victory-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .victory-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .victory-content {
+            background: var(--bg-secondary);
+            padding: 3rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+            margin: 2rem;
+        }
+
+        .victory-modal.show .victory-content {
+            transform: scale(1);
+        }
+
+        .victory-emoji {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .victory-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--success);
+        }
+
+        .victory-stats {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top: 3px solid #26C6DA;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .game-container {
+                grid-template-columns: 1fr;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .puzzle-piece {
+                width: 60px;
+                height: 60px;
+            }
+
+            .reference-image {
+                width: 150px;
+                height: 150px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🧩 Modern Jigsaw Puzzle</h1>
+            <p>Choose an image, select difficulty, and solve beautiful puzzles</p>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label class="control-label">Actions</label>
+                    <button id="shuffleBtn" class="btn btn-primary">🔀 New Game</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Gallery -->
+        <div class="image-gallery">
+            <h3 class="gallery-title">Choose Your Puzzle Image</h3>
+            <div id="imageGallery" class="gallery-grid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    Loading beautiful images...
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Stats -->
+        <div class="game-stats">
+            <div class="stat-card">
+                <span id="moveCount" class="stat-value">0</span>
+                <span class="stat-label">Moves</span>
+            </div>
+            <div class="stat-card">
+                <span id="timer" class="stat-value">00:00</span>
+                <span class="stat-label">Time</span>
+            </div>
+            <div class="stat-card">
+                <span id="progressPercent" class="stat-value">0%</span>
+                <span class="stat-label">Progress</span>
+            </div>
+        </div>
+
+        <!-- Game Container -->
+        <div class="game-container">
+            <div class="puzzle-container">
+                <div id="puzzleGrid" class="puzzle-grid"></div>
+            </div>
+            
+            <div id="referenceContainer" class="reference-container" style="display: none;">
+                <div class="reference-title">Reference Image</div>
+                <img id="referenceImage" class="reference-image" alt="Reference">
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal" class="victory-modal">
+        <div class="victory-content">
+            <div class="victory-emoji">🎉</div>
+            <h2 class="victory-title">Congratulations!</h2>
+            <div id="victoryStats" class="victory-stats"></div>
+            <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        class ModernJigsawPuzzle {
+            constructor() {
+                this.apiUrl = '';  // Empty for same origin
+                this.currentImage = null;
+                this.gridSize = 6; // Fixed to expert level
+                this.pieces = [];
+                this.currentOrder = [];
+                this.correctOrder = [];
+                this.selectedPiece = null;
+                this.moves = 0;
+                this.startTime = null;
+                this.timerInterval = null;
+                this.isComplete = false;
+                this.seedImages = [];
+                
+                this.initializeElements();
+                this.loadSeedImages();
+            }
+
+            initializeElements() {
+                this.shuffleBtn = document.getElementById('shuffleBtn');
+                this.puzzleGrid = document.getElementById('puzzleGrid');
+                this.referenceImage = document.getElementById('referenceImage');
+                this.referenceContainer = document.getElementById('referenceContainer');
+                this.moveCount = document.getElementById('moveCount');
+                this.timer = document.getElementById('timer');
+                this.progressPercent = document.getElementById('progressPercent');
+                this.imageGallery = document.getElementById('imageGallery');
+                this.victoryModal = document.getElementById('victoryModal');
+                this.victoryStats = document.getElementById('victoryStats');
+                this.playAgainBtn = document.getElementById('playAgainBtn');
+
+                this.shuffleBtn.addEventListener('click', () => this.startNewGame());
+                this.playAgainBtn.addEventListener('click', () => this.hideVictoryModal());
+                this.victoryModal.addEventListener('click', (e) => {
+                    if (e.target === this.victoryModal) this.hideVictoryModal();
+                });
+            }
+
+            async loadSeedImages() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/seed-images`);
+                    this.seedImages = await response.json();
+                    this.renderImageGallery();
+                    
+                    // Select first image by default
+                    if (this.seedImages.length > 0) {
+                        this.selectImage(this.seedImages[0]);
+                    }
+                } catch (error) {
+                    console.error('Error loading seed images:', error);
+                    this.imageGallery.innerHTML = '<div class="loading">Failed to load images</div>';
+                }
+            }
+
+            renderImageGallery() {
+                this.imageGallery.innerHTML = '';
+                
+                this.seedImages.forEach((image, index) => {
+                    const item = document.createElement('div');
+                    item.className = `gallery-item ${index === 0 ? 'selected' : ''}`;
+                    item.innerHTML = `<img src="${image.data}" alt="${image.name}">`;
+                    item.addEventListener('click', () => this.selectImage(image));
+                    this.imageGallery.appendChild(item);
+                });
+            }
+
+            selectImage(imageData) {
+                // Update gallery selection
+                document.querySelectorAll('.gallery-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                event.currentTarget.classList.add('selected');
+                
+                // Load image
+                this.currentImage = {
+                    src: imageData.data,
+                    name: imageData.name
+                };
+                
+                this.referenceImage.src = imageData.data;
+                this.referenceContainer.style.display = 'block';
+                
+                this.createPuzzle();
+            }
+
+            async createPuzzle() {
