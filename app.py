@@ -13,28 +13,31 @@ class JigsawGenerator:
     def __init__(self):
         self.seed_images = self.generate_seed_images()
     
-    def generate_seed_images(self):
-        """Generate beautiful seed images programmatically"""
-        seed_images = []
-        
-        # Gradient patterns
-        gradients = [
-            ['#FFE5B4', '#FFCAB4', '#FFB4C4', '#C4B4FF'],  # Warm pastels
-            ['#B4E5FF', '#B4CCFF', '#CCB4FF', '#E5B4FF'],  # Cool pastels
-            ['#E5FFB4', '#CCFFB4', '#B4FFC4', '#B4FFE5'],  # Green pastels
-            ['#FFB4B4', '#FFD4B4', '#FFF4B4', '#F4FFB4'],  # Warm sunset
-        ]
-        
-        for i, colors in enumerate(gradients):
-            img = self.create_gradient_image(colors, f"gradient_{i}")
-            seed_images.append(img)
-        
-        # Geometric patterns
-        for i in range(3):
-            img = self.create_geometric_pattern(i)
-            seed_images.append(img)
-        
-        return seed_images
+def generate_seed_images(self):
+    """Load only seed images from files - no programmatic images"""
+    seed_images = []
+    
+    # Create a 'seed_images' folder in your project
+    seed_folder = os.path.join(os.path.dirname(__file__), 'seed_images')
+    
+    if os.path.exists(seed_folder):
+        for filename in os.listdir(seed_folder):
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                filepath = os.path.join(seed_folder, filename)
+                try:
+                    image = Image.open(filepath)
+                    # Resize to 400x400
+                    image = image.resize((400, 400), Image.Resampling.LANCZOS)
+                    
+                    seed_images.append({
+                        'name': os.path.splitext(filename)[0],
+                        'image': image,
+                        'data': self.image_to_base64(image)
+                    })
+                except Exception as e:
+                    print(f"Error loading {filename}: {e}")
+    
+    return seed_images
     
     def create_gradient_image(self, colors, name):
         """Create a gradient image with given colors"""
@@ -184,4 +187,5 @@ def validate_puzzle():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
+
     app.run(host='0.0.0.0', port=port, debug=True)
