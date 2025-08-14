@@ -11,7 +11,7 @@ CORS(app)
 
 class JigsawGenerator:
     def __init__(self):
-        self.seed_images = self.generate_seed_images()
+        self.seed_images = []
     
 def generate_seed_images(self):
     """Load only seed images from files - no programmatic images"""
@@ -189,3 +189,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
