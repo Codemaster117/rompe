@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Jigsaw Puzzle</title>
+    <title>Rompecabezas</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -456,8 +456,8 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>🧩 Modern Jigsaw Puzzle</h1>
-            <p>Choose an image and solve beautiful puzzles</p>
+            <h1>🧩 Rompecabezas Toxico</h1>
+            <p>Elige una imagen y resuelve este rompecaezas</p>
         </div>
 
         <!-- Controls Panel -->
@@ -465,11 +465,11 @@
             <div class="controls-grid">
                 <div class="control-group">
                     <label class="control-label">Actions</label>
-                    <button id="shuffleBtn" class="btn btn-primary">🔀 New Game</button>
+                    <button id="shuffleBtn" class="btn btn-primary">🔀 Jugamos?</button>
                 </div> 
                 <div class="control-group">
     <label class="control-label">More Games</label>
-    <a href="https://yourgameshub.com" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">🌐 Visit Hub</a>
+    <a href="https://yourgameshub.com" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">O Volvemos al Inicio?</a>
 
             </div>
         </div>
@@ -480,7 +480,7 @@
             <div id="imageGallery" class="gallery-grid">
                 <div class="loading">
                     <div class="loading-spinner"></div>
-                    Loading beautiful images...
+                    Cargando Imagenes...
                 </div>
             </div>
         </div>
@@ -489,15 +489,15 @@
         <div class="game-stats">
             <div class="stat-card">
                 <span id="moveCount" class="stat-value">0</span>
-                <span class="stat-label">Moves</span>
+                <span class="stat-label">Movimientos</span>
             </div>
             <div class="stat-card">
                 <span id="timer" class="stat-value">00:00</span>
-                <span class="stat-label">Time</span>
+                <span class="stat-label">Tiempo</span>
             </div>
             <div class="stat-card">
                 <span id="progressPercent" class="stat-value">0%</span>
-                <span class="stat-label">Progress</span>
+                <span class="stat-label">Progreso</span>
             </div>
         </div>
 
@@ -508,7 +508,7 @@
             </div>
             
             <div id="referenceContainer" class="reference-container" style="display: none;">
-                <div class="reference-title">Reference Image</div>
+                <div class="reference-title">Imagen de Referencia</div>
                 <img id="referenceImage" class="reference-image" alt="Reference">
             </div>
         </div>
@@ -518,9 +518,9 @@
     <div id="victoryModal" class="victory-modal">
         <div class="victory-content">
             <div class="victory-emoji">🎉</div>
-            <h2 class="victory-title">Congratulations!</h2>
+            <h2 class="victory-title">Felicitaciones!</h2>
             <div id="victoryStats" class="victory-stats"></div>
-            <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
+            <button id="playAgainBtn" class="btn btn-primary">De Nuevo?</button>
         </div>
     </div>
 
@@ -613,3 +613,4 @@
 
 
             async createPuzzle() {
+
