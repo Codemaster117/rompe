@@ -14,28 +14,46 @@ class JigsawGenerator:
         self.seed_images = []
     
 def generate_seed_images(self):
-    """Load only seed images from files - no programmatic images"""
+    """Load only seed images from files"""
     seed_images = []
     
-    # Create a 'seed_images' folder in your project
+    # Path to seed images folder
     seed_folder = os.path.join(os.path.dirname(__file__), 'seed_images')
     
     if os.path.exists(seed_folder):
-        for filename in os.listdir(seed_folder):
-            if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-                filepath = os.path.join(seed_folder, filename)
-                try:
-                    image = Image.open(filepath)
-                    # Resize to 400x400
+        # Get all image files and sort them
+        image_files = [f for f in os.listdir(seed_folder) 
+                      if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
+        image_files.sort()  # Alphabetical order
+        
+        for filename in image_files:
+            filepath = os.path.join(seed_folder, filename)
+            try:
+                with Image.open(filepath) as image:
+                    # Convert to RGB if necessary (handles RGBA, grayscale, etc.)
+                    if image.mode != 'RGB':
+                        image = image.convert('RGB')
+                    
+                    # Resize to 400x400 maintaining aspect ratio
                     image = image.resize((400, 400), Image.Resampling.LANCZOS)
                     
+                    # Create clean name from filename
+                    name = os.path.splitext(filename)[0].replace('-', ' ').replace('_', ' ').title()
+                    
                     seed_images.append({
-                        'name': os.path.splitext(filename)[0],
+                        'name': name,
                         'image': image,
                         'data': self.image_to_base64(image)
                     })
-                except Exception as e:
-                    print(f"Error loading {filename}: {e}")
+                    print(f"Loaded: {name}")
+                    
+            except Exception as e:
+                print(f"Error loading {filename}: {e}")
+    else:
+        print(f"Seed images folder not found: {seed_folder}")
+    
+    if not seed_images:
+        print("No seed images loaded - check seed_images folder exists and contains valid images")
     
     return seed_images
     
@@ -189,4 +207,5 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
