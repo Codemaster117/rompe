@@ -202,10 +202,61 @@ def validate_puzzle():
         'is_solved': is_solved,
         'message': 'Congratulations! Puzzle solved!' if is_solved else 'Keep trying!'
     })
+    def generate_seed_images(self):
+    """Load only seed images from files with debugging"""
+    seed_images = []
+    
+    # Path to seed images folder
+    seed_folder = os.path.join(os.path.dirname(__file__), 'seed_images')
+    
+    print(f"Looking for seed images in: {seed_folder}")
+    print(f"Folder exists: {os.path.exists(seed_folder)}")
+    
+    if os.path.exists(seed_folder):
+        all_files = os.listdir(seed_folder)
+        print(f"All files in folder: {all_files}")
+        
+        image_files = [f for f in all_files 
+                      if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
+        print(f"Image files found: {image_files}")
+        
+        for filename in image_files:
+            filepath = os.path.join(seed_folder, filename)
+            print(f"Trying to load: {filepath}")
+            try:
+                with Image.open(filepath) as image:
+                    print(f"Successfully opened: {filename} - Size: {image.size}, Mode: {image.mode}")
+                    
+                    if image.mode != 'RGB':
+                        image = image.convert('RGB')
+                        print(f"Converted {filename} to RGB")
+                    
+                    image = image.resize((400, 400), Image.Resampling.LANCZOS)
+                    name = os.path.splitext(filename)[0].replace('-', ' ').replace('_', ' ').title()
+                    
+                    seed_images.append({
+                        'name': name,
+                        'image': image,
+                        'data': self.image_to_base64(image)
+                    })
+                    print(f"Successfully processed: {name}")
+                    
+            except Exception as e:
+                print(f"ERROR loading {filename}: {str(e)}")
+                import traceback
+                traceback.print_exc()
+    else:
+        print(f"ERROR: Folder does not exist: {seed_folder}")
+        print(f"Current working directory: {os.getcwd()}")
+        print(f"Files in current directory: {os.listdir('.')}")
+    
+    print(f"Total images loaded: {len(seed_images)}")
+    return seed_images
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
