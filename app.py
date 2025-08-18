@@ -1,8 +1,8 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify
 from flask_cors import CORS
+from PIL import Image, ImageDraw
 import random
 import base64
-from PIL import Image, ImageDraw
 import io
 import os
 
@@ -11,252 +11,166 @@ CORS(app)
 
 class JigsawGenerator:
     def __init__(self):
-        self.seed_images = []
+        self.seed_images = self.generate_seed_images()
     
-def generate_seed_images(self):
-    """Load only seed images from files"""
-    seed_images = []
-    
-    # Path to seed images folder
-    seed_folder = os.path.join(os.path.dirname(__file__), 'seed_images')
-    
-    if os.path.exists(seed_folder):
-        # Get all image files and sort them
-        image_files = [f for f in os.listdir(seed_folder) 
-                      if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
-        image_files.sort()  # Alphabetical order
+    def generate_seed_images(self):
+        """Load seed images from static/seed_images folder"""
+        seed_images = []
         
-        for filename in image_files:
-            filepath = os.path.join(seed_folder, filename)
-            try:
-                with Image.open(filepath) as image:
-                    # Convert to RGB if necessary (handles RGBA, grayscale, etc.)
-                    if image.mode != 'RGB':
-                        image = image.convert('RGB')
-                    
-                    # Resize to 400x400 maintaining aspect ratio
-                    image = image.resize((400, 400), Image.Resampling.LANCZOS)
-                    
-                    # Create clean name from filename
-                    name = os.path.splitext(filename)[0].replace('-', ' ').replace('_', ' ').title()
-                    
-                    seed_images.append({
-                        'name': name,
-                        'image': image,
-                        'data': self.image_to_base64(image)
-                    })
-                    print(f"Loaded: {name}")
-                    
-            except Exception as e:
-                print(f"Error loading {filename}: {e}")
-    else:
-        print(f"Seed images folder not found: {seed_folder}")
-    
-    if not seed_images:
-        print("No seed images loaded - check seed_images folder exists and contains valid images")
-    
-    return seed_images
-    
-    def create_gradient_image(self, colors, name):
-        """Create a gradient image with given colors"""
-        width, height = 400, 400
-        image = Image.new('RGB', (width, height))
-        draw = ImageDraw.Draw(image)
+        # Path to static seed images folder
+        static_folder = os.path.join(app.static_folder or 'static')
+        seed_folder = os.path.join(static_folder, 'seed_images')
         
-        # Create radial gradient effect
-        center_x, center_y = width // 2, height // 2
-        max_radius = min(width, height) // 2
+        print(f"Looking for seed images in: {seed_folder}")
+        print(f"Static folder: {static_folder}")
+        print(f"Folder exists: {os.path.exists(seed_folder)}")
         
-        for y in range(height):
-            for x in range(width):
-                distance = ((x - center_x) ** 2 + (y - center_y) ** 2) ** 0.5
-                ratio = min(distance / max_radius, 1.0)
-                
-                # Interpolate between colors
-                if ratio <= 0.33:
-                    color = self.interpolate_color(colors[0], colors[1], ratio * 3)
-                elif ratio <= 0.66:
-                    color = self.interpolate_color(colors[1], colors[2], (ratio - 0.33) * 3)
-                else:
-                    color = self.interpolate_color(colors[2], colors[3], (ratio - 0.66) * 3)
-                
-                draw.point((x, y), color)
+        if os.path.exists(seed_folder):
+            all_files = os.listdir(seed_folder)
+            print(f"All files in folder: {all_files}")
+            
+            image_files = [f for f in all_files 
+                          if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
+            print(f"Image files found: {image_files}")
+            
+            for filename in sorted(image_files):
+                filepath = os.path.join(seed_folder, filename)
+                print(f"Trying to load: {filepath}")
+                try:
+                    with Image.open(filepath) as image:
+                        print(f"Successfully opened: {filename}")
+                        
+                        # Convert to RGB if necessary
+                        if image.mode != 'RGB':
+                            image = image.convert('RGB')
+                        
+                        # Resize to 400x400
+                        image = image.resize((400, 400), Image.Resampling.LANCZOS)
+                        
+                        # Create clean name from filename
+                        name = os.path.splitext(filename)[0].replace('-', ' ').replace('_', ' ').title()
+                        
+                        seed_images.append({
+                            'name': name,
+                            'image': image,
+                            'data': self.image_to_base64(image)
+                        })
+                        print(f"Successfully processed: {name}")
+                        
+                except Exception as e:
+                    print(f"ERROR loading {filename}: {str(e)}")
+        else:
+            print(f"ERROR: Folder does not exist: {seed_folder}")
+            print(f"Available files in static: {os.listdir(static_folder) if os.path.exists(static_folder) else 'static folder not found'}")
+            
+            # Create a fallback test image
+            test_image = Image.new('RGB', (400, 400), '#4CAF50')
+            draw = ImageDraw.Draw(test_image)
+            draw.text((150, 190), "Add Images", fill='white', font_size=24)
+            draw.text((120, 210), "to static/seed_images/", fill='white', font_size=16)
+            
+            seed_images.append({
+                'name': 'Add Your Images',
+                'image': test_image,
+                'data': self.image_to_base64(test_image)
+            })
         
-        return {
-            'name': name,
-            'image': image,
-            'data': self.image_to_base64(image)
-        }
-    
-    def create_geometric_pattern(self, pattern_id):
-        """Create geometric patterns"""
-        width, height = 400, 400
-        image = Image.new('RGB', (width, height), '#F8F9FA')
-        draw = ImageDraw.Draw(image)
-        
-        if pattern_id == 0:  # Circles
-            colors = ['#FF6B9D', '#C44FAD', '#7209B7', '#A663CC']
-            for i in range(20):
-                x = random.randint(0, width)
-                y = random.randint(0, height)
-                radius = random.randint(20, 80)
-                color = random.choice(colors)
-                draw.ellipse([x-radius, y-radius, x+radius, y+radius], 
-                           fill=color + '80')  # Semi-transparent
-        
-        elif pattern_id == 1:  # Triangles
-            colors = ['#4ECDC4', '#44A08D', '#093637', '#B2FEFA']
-            for i in range(15):
-                x1, y1 = random.randint(0, width), random.randint(0, height)
-                x2, y2 = x1 + random.randint(-60, 60), y1 + random.randint(-60, 60)
-                x3, y3 = x1 + random.randint(-60, 60), y1 + random.randint(-60, 60)
-                color = random.choice(colors)
-                draw.polygon([(x1, y1), (x2, y2), (x3, y3)], fill=color + '80')
-        
-        else:  # Rectangles
-            colors = ['#FFA726', '#FF7043', '#FF5722', '#FFCC80']
-            for i in range(25):
-                x1, y1 = random.randint(0, width-50), random.randint(0, height-50)
-                x2, y2 = x1 + random.randint(30, 100), y1 + random.randint(30, 100)
-                color = random.choice(colors)
-                draw.rectangle([x1, y1, x2, y2], fill=color + '80')
-        
-        return {
-            'name': f'geometric_{pattern_id}',
-            'image': image,
-            'data': self.image_to_base64(image)
-        }
-    
-    def interpolate_color(self, color1, color2, ratio):
-        """Interpolate between two hex colors"""
-        c1 = [int(color1[i:i+2], 16) for i in (1, 3, 5)]
-        c2 = [int(color2[i:i+2], 16) for i in (1, 3, 5)]
-        
-        r = int(c1[0] + (c2[0] - c1[0]) * ratio)
-        g = int(c1[1] + (c2[1] - c1[1]) * ratio)
-        b = int(c1[2] + (c2[2] - c1[2]) * ratio)
-        
-        return (r, g, b)
+        print(f"Total images loaded: {len(seed_images)}")
+        return seed_images
     
     def image_to_base64(self, image):
-        """Convert PIL image to base64 string"""
+        """Convert PIL image to base64 data URL"""
         buffer = io.BytesIO()
         image.save(buffer, format='PNG')
-        img_str = base64.b64encode(buffer.getvalue()).decode()
-        return f"data:image/png;base64,{img_str}"
+        img_data = buffer.getvalue()
+        base64_data = base64.b64encode(img_data).decode('utf-8')
+        return f"data:image/png;base64,{base64_data}"
     
-    def shuffle_puzzle(self, grid_size, seed=None):
-        """Generate a shuffled puzzle configuration"""
-        if seed is not None:
-            random.seed(seed)
-        
-        total_pieces = grid_size * grid_size
-        pieces = list(range(total_pieces))
-        random.shuffle(pieces)
-        
-        return pieces
+    def create_puzzle_pieces(self, image_data, grid_size=6):
+        """Create puzzle pieces from image data"""
+        try:
+            # Decode base64 image
+            image_data = image_data.replace('data:image/png;base64,', '')
+            image_bytes = base64.b64decode(image_data)
+            image = Image.open(io.BytesIO(image_bytes))
+            
+            # Resize to ensure it's 400x400
+            image = image.resize((400, 400), Image.Resampling.LANCZOS)
+            
+            pieces = []
+            piece_size = 400 // grid_size
+            
+            for row in range(grid_size):
+                for col in range(grid_size):
+                    # Calculate piece boundaries
+                    left = col * piece_size
+                    top = row * piece_size
+                    right = left + piece_size
+                    bottom = top + piece_size
+                    
+                    # Extract piece from image
+                    piece = image.crop((left, top, right, bottom))
+                    
+                    # Convert to base64
+                    piece_data = self.image_to_base64(piece)
+                    
+                    pieces.append({
+                        'id': row * grid_size + col,
+                        'row': row,
+                        'col': col,
+                        'data': piece_data,
+                        'correct_position': row * grid_size + col
+                    })
+            
+            # Shuffle pieces
+            shuffled_pieces = pieces.copy()
+            random.shuffle(shuffled_pieces)
+            
+            # Assign new positions
+            for i, piece in enumerate(shuffled_pieces):
+                piece['current_position'] = i
+            
+            return {
+                'pieces': shuffled_pieces,
+                'original_image': self.image_to_base64(image),
+                'grid_size': grid_size,
+                'total_pieces': len(pieces)
+            }
+            
+        except Exception as e:
+            print(f"Error creating puzzle pieces: {e}")
+            return None
 
-# Initialize the jigsaw generator
-jigsaw_gen = JigsawGenerator()
+# Create global puzzle generator
+puzzle_generator = JigsawGenerator()
 
 @app.route('/')
 def index():
+    """Serve the main puzzle page"""
     return render_template('index.html')
 
 @app.route('/api/seed-images')
 def get_seed_images():
     """Get all available seed images"""
-    images = []
-    for img_data in jigsaw_gen.seed_images:
-        images.append({
-            'id': img_data['name'],
-            'name': img_data['name'].replace('_', ' ').title(),
-            'data': img_data['data']
-        })
-    return jsonify(images)
+    images = [{'name': img['name'], 'data': img['data']} for img in puzzle_generator.seed_images]
+    return jsonify({'images': images})
 
-@app.route('/api/puzzle/generate', methods=['POST'])
-def generate_puzzle():
-    """Generate a shuffled puzzle - always 6x6 (extreme)"""
-    data = request.get_json()
-    grid_size = 6  # Always extreme difficulty
-    seed = data.get('seed', None)
-    
-    shuffled_pieces = jigsaw_gen.shuffle_puzzle(grid_size, seed)
-    
-    return jsonify({
-        'grid_size': grid_size,
-        'pieces': shuffled_pieces,
-        'seed': seed
-    })
-
-@app.route('/api/puzzle/validate', methods=['POST'])
-def validate_puzzle():
-    """Check if puzzle is solved"""
-    data = request.get_json()
-    current_order = data.get('current_order', [])
-    
-    is_solved = all(i == pos for i, pos in enumerate(current_order))
-    
-    return jsonify({
-        'is_solved': is_solved,
-        'message': 'Congratulations! Puzzle solved!' if is_solved else 'Keep trying!'
-    })
-    def generate_seed_images(self):
-    """Load only seed images from files with debugging"""
-    seed_images = []
-    
-    # Path to seed images folder
-    seed_folder = os.path.join(os.path.dirname(__file__), 'seed_images')
-    
-    print(f"Looking for seed images in: {seed_folder}")
-    print(f"Folder exists: {os.path.exists(seed_folder)}")
-    
-    if os.path.exists(seed_folder):
-        all_files = os.listdir(seed_folder)
-        print(f"All files in folder: {all_files}")
+@app.route('/api/create-puzzle/<int:image_index>')
+def create_puzzle(image_index):
+    """Create a new puzzle from selected seed image"""
+    if 0 <= image_index < len(puzzle_generator.seed_images):
+        selected_image = puzzle_generator.seed_images[image_index]
+        puzzle_data = puzzle_generator.create_puzzle_pieces(selected_image['data'], grid_size=6)
         
-        image_files = [f for f in all_files 
-                      if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
-        print(f"Image files found: {image_files}")
-        
-        for filename in image_files:
-            filepath = os.path.join(seed_folder, filename)
-            print(f"Trying to load: {filepath}")
-            try:
-                with Image.open(filepath) as image:
-                    print(f"Successfully opened: {filename} - Size: {image.size}, Mode: {image.mode}")
-                    
-                    if image.mode != 'RGB':
-                        image = image.convert('RGB')
-                        print(f"Converted {filename} to RGB")
-                    
-                    image = image.resize((400, 400), Image.Resampling.LANCZOS)
-                    name = os.path.splitext(filename)[0].replace('-', ' ').replace('_', ' ').title()
-                    
-                    seed_images.append({
-                        'name': name,
-                        'image': image,
-                        'data': self.image_to_base64(image)
-                    })
-                    print(f"Successfully processed: {name}")
-                    
-            except Exception as e:
-                print(f"ERROR loading {filename}: {str(e)}")
-                import traceback
-                traceback.print_exc()
-    else:
-        print(f"ERROR: Folder does not exist: {seed_folder}")
-        print(f"Current working directory: {os.getcwd()}")
-        print(f"Files in current directory: {os.listdir('.')}")
+        if puzzle_data:
+            return jsonify({
+                'success': True,
+                'puzzle': puzzle_data,
+                'image_name': selected_image['name']
+            })
     
-    print(f"Total images loaded: {len(seed_images)}")
-    return seed_images
+    return jsonify({'success': False, 'error': 'Invalid image selection'})
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-
-    app.run(host='0.0.0.0', port=port, debug=True)
-
-
+    app.run(debug=True, host='0.0.0.0', port=5000)
 
