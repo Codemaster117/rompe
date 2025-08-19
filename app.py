@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, send_from_directory
 from flask_cors import CORS
 from PIL import Image, ImageDraw
 import random
@@ -11,301 +11,265 @@ CORS(app)
 
 class JigsawGenerator:
     def __init__(self):
-        self.seed_images = self.generate_seed_images()
+        self.seed_images = []
+        self.load_seed_images()
     
-    def load_seed_images_from_root(self):
-        """Load images from seed_images folder in root directory"""
-        seed_images = []
-        
-        # Path to seed_images folder in root directory
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        seed_folder = os.path.join(root_path, 'seed_images')
-        
-        print(f"=== LOADING SEED IMAGES FROM ROOT ===")
-        print(f"Root path: {root_path}")
-        print(f"Seed folder: {seed_folder}")
-        print(f"Seed folder exists: {os.path.exists(seed_folder)}")
-        
-        if os.path.exists(seed_folder):
-            try:
-                all_files = os.listdir(seed_folder)
-                print(f"All files in seed folder: {all_files}")
-                
-                # Filter for image files
-                image_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')
-                image_files = [f for f in all_files if f.lower().endswith(image_extensions)]
-                print(f"Image files found: {image_files}")
-                
-                for filename in sorted(image_files):
-                    filepath = os.path.join(seed_folder, filename)
-                    try:
-                        print(f"Loading: {filepath}")
-                        with Image.open(filepath) as img:
-                            # Convert to RGB if needed
-                            if img.mode != 'RGB':
-                                img = img.convert('RGB')
-                            
-                            # Resize to 400x400
-                            img = img.resize((400, 400), Image.Resampling.LANCZOS)
-                            
-                            # Create display name from filename
-                            name = os.path.splitext(filename)[0]
-                            name = name.replace('-', ' ').replace('_', ' ').title()
-                            
-                            seed_images.append({
-                                'name': name,
-                                'image': img.copy(),
-                                'data': self.image_to_base64(img)
-                            })
-                            print(f"✓ Successfully loaded: {name}")
-                            
-                    except Exception as e:
-                        print(f"✗ Error loading {filename}: {e}")
-                        
-            except Exception as e:
-                print(f"Error reading seed folder: {e}")
-        else:
-            print(f"Seed folder not found: {seed_folder}")
-            print(f"Available files in root: {os.listdir(root_path)}")
-        
-        print(f"Total seed images loaded: {len(seed_images)}")
-        return seed_images
-    
-    def create_fallback_images(self):
-        """Create beautiful fallback images if no seed images found"""
-        print("Creating fallback images...")
-        fallback_images = []
-        
-        # Beautiful gradient configurations
-        gradients = [
-            {
-                'name': 'Ocean Sunset',
-                'colors': [(255, 154, 158), (250, 208, 196), (255, 206, 84), (255, 238, 173)],
-            },
-            {
-                'name': 'Forest Mystic',
-                'colors': [(168, 230, 207), (220, 237, 193), (255, 211, 182), (255, 170, 165)],
-            },
-            {
-                'name': 'Purple Dreams',
-                'colors': [(196, 181, 253), (255, 182, 193), (147, 197, 253), (199, 210, 254)],
-            },
-            {
-                'name': 'Golden Hour',
-                'colors': [(251, 191, 36), (248, 113, 113), (252, 231, 243), (254, 240, 138)],
-            },
-            {
-                'name': 'Coral Reef',
-                'colors': [(255, 107, 107), (255, 159, 67), (255, 206, 84), (72, 219, 251)],
-            },
-            {
-                'name': 'Zen Garden',
-                'colors': [(134, 239, 172), (187, 247, 208), (254, 240, 138), (252, 211, 77)],
-            }
+    def load_seed_images(self):
+        """Load seed images from multiple possible locations"""
+        # Try multiple locations for images
+        possible_paths = [
+            os.path.join(app.root_path, 'seed_images'),
+            os.path.join(app.root_path, 'static', 'seed_images'),
+            os.path.join(app.root_path, 'static', 'images')
         ]
         
-        for grad in gradients:
-            try:
-                image = self.create_gradient_image(grad['colors'], grad['name'])
-                fallback_images.append({
-                    'name': grad['name'],
-                    'image': image,
-                    'data': self.image_to_base64(image)
-                })
-                print(f"✓ Created fallback: {grad['name']}")
-            except Exception as e:
-                print(f"✗ Error creating {grad['name']}: {e}")
+        print("=== LOADING SEED IMAGES ===")
+        print(f"App root path: {app.root_path}")
         
-        return fallback_images
-    
-    def create_gradient_image(self, colors, name):
-        """Create a beautiful radial gradient image"""
-        image = Image.new('RGB', (400, 400))
-        
-        center_x, center_y = 200, 200
-        max_radius = 280
-        
-        for y in range(400):
-            for x in range(400):
-                # Calculate distance from center
-                distance = ((x - center_x) ** 2 + (y - center_y) ** 2) ** 0.5
-                ratio = min(distance / max_radius, 1.0)
-                
-                # Interpolate through color stops
-                color_stops = len(colors) - 1
-                if color_stops == 0:
-                    r, g, b = colors[0]
-                else:
-                    segment = ratio * color_stops
-                    idx = int(segment)
-                    local_ratio = segment - idx
+        for path in possible_paths:
+            print(f"Checking path: {path}")
+            if os.path.exists(path):
+                print(f"✓ Path exists: {path}")
+                try:
+                    files = os.listdir(path)
+                    image_files = [f for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'))]
+                    print(f"Found {len(image_files)} images: {image_files}")
                     
-                    if idx >= color_stops:
-                        r, g, b = colors[-1]
-                    else:
-                        c1, c2 = colors[idx], colors[idx + 1]
-                        r = int(c1[0] + (c2[0] - c1[0]) * local_ratio)
-                        g = int(c1[1] + (c2[1] - c1[1]) * local_ratio)
-                        b = int(c1[2] + (c2[2] - c1[2]) * local_ratio)
+                    for img_file in image_files:
+                        img_path = os.path.join(path, img_file)
+                        try:
+                            # Load and process image
+                            with Image.open(img_path) as img:
+                                # Convert to RGB if necessary
+                                if img.mode in ('RGBA', 'P'):
+                                    img = img.convert('RGB')
+                                
+                                # Resize to 400x400
+                                img = img.resize((400, 400), Image.Resampling.LANCZOS)
+                                
+                                # Convert to base64
+                                buffer = io.BytesIO()
+                                img.save(buffer, format='JPEG', quality=85)
+                                img_str = base64.b64encode(buffer.getvalue()).decode()
+                                
+                                self.seed_images.append({
+                                    'name': os.path.splitext(img_file)[0].replace('_', ' ').replace('-', ' ').title(),
+                                    'data': f"data:image/jpeg;base64,{img_str}"
+                                })
+                                print(f"✓ Successfully loaded: {img_file}")
+                        except Exception as e:
+                            print(f"✗ Error loading {img_file}: {str(e)}")
+                    
+                    if self.seed_images:
+                        print(f"✓ Total images loaded: {len(self.seed_images)}")
+                        return  # Stop after first successful path
+                        
+                except Exception as e:
+                    print(f"✗ Error accessing {path}: {str(e)}")
+            else:
+                print(f"✗ Path does not exist: {path}")
+        
+        # If no images found, create fallback images
+        if not self.seed_images:
+            print("No seed images found - creating fallback images...")
+            self.create_fallback_images()
+    
+    def create_fallback_images(self):
+        """Create beautiful fallback images if no seed images are found"""
+        fallback_configs = [
+            {"name": "Ocean Sunset", "colors": [(255, 94, 77), (255, 154, 0), (255, 206, 84)]},
+            {"name": "Mountain Dawn", "colors": [(74, 144, 226), (124, 58, 237), (219, 39, 119)]},
+            {"name": "Forest Mist", "colors": [(16, 185, 129), (101, 163, 13), (34, 197, 94)]},
+            {"name": "Desert Bloom", "colors": [(245, 101, 101), (251, 146, 60), (252, 211, 77)]},
+            {"name": "Arctic Aurora", "colors": [(59, 130, 246), (147, 51, 234), (236, 72, 153)]},
+            {"name": "Tropical Paradise", "colors": [(6, 182, 212), (52, 211, 153), (110, 231, 183)]}
+        ]
+        
+        for config in fallback_configs:
+            img = Image.new('RGB', (400, 400))
+            draw = ImageDraw.Draw(img)
+            
+            # Create gradient
+            colors = config["colors"]
+            for y in range(400):
+                # Calculate color interpolation
+                ratio = y / 399
+                if ratio < 0.5:
+                    # Interpolate between first and second color
+                    blend_ratio = ratio * 2
+                    r = int(colors[0][0] + (colors[1][0] - colors[0][0]) * blend_ratio)
+                    g = int(colors[0][1] + (colors[1][1] - colors[0][1]) * blend_ratio)
+                    b = int(colors[0][2] + (colors[1][2] - colors[0][2]) * blend_ratio)
+                else:
+                    # Interpolate between second and third color
+                    blend_ratio = (ratio - 0.5) * 2
+                    r = int(colors[1][0] + (colors[2][0] - colors[1][0]) * blend_ratio)
+                    g = int(colors[1][1] + (colors[2][1] - colors[1][1]) * blend_ratio)
+                    b = int(colors[1][2] + (colors[2][2] - colors[1][2]) * blend_ratio)
                 
-                image.putpixel((x, y), (r, g, b))
-        
-        return image
+                draw.line([(0, y), (400, y)], fill=(r, g, b))
+            
+            # Convert to base64
+            buffer = io.BytesIO()
+            img.save(buffer, format='JPEG', quality=90)
+            img_str = base64.b64encode(buffer.getvalue()).decode()
+            
+            self.seed_images.append({
+                'name': config["name"],
+                'data': f"data:image/jpeg;base64,{img_str}"
+            })
+            print(f"✓ Created fallback image: {config['name']}")
     
-    def generate_seed_images(self):
-        """Load images from root seed_images folder, fallback to generated images"""
-        # Try to load seed images from root directory first
-        seed_images = self.load_seed_images_from_root()
-        
-        if seed_images:
-            print(f"Using {len(seed_images)} seed images from root folder")
-            return seed_images
-        else:
-            print("No seed images found in root folder, using fallback images")
-            return self.create_fallback_images()
-    
-    def image_to_base64(self, image):
-        """Convert PIL image to base64 data URL"""
-        buffer = io.BytesIO()
-        image.save(buffer, format='PNG', optimize=True)
-        img_data = buffer.getvalue()
-        base64_data = base64.b64encode(img_data).decode('utf-8')
-        return f"data:image/png;base64,{base64_data}"
-    
-    def create_puzzle_pieces(self, image_data, grid_size=6):
-        """Create puzzle pieces from image data"""
+    def create_puzzle(self, image_data, difficulty=6):
+        """Create jigsaw puzzle pieces from an image"""
         try:
-            # Remove data URL prefix if present
-            if ',' in image_data:
+            # Decode base64 image
+            if image_data.startswith('data:image'):
                 image_data = image_data.split(',')[1]
             
-            # Decode base64 image
             image_bytes = base64.b64decode(image_data)
             image = Image.open(io.BytesIO(image_bytes))
             
-            # Ensure proper format
+            # Ensure image is 400x400
+            image = image.resize((400, 400), Image.Resampling.LANCZOS)
             if image.mode != 'RGB':
                 image = image.convert('RGB')
-            image = image.resize((400, 400), Image.Resampling.LANCZOS)
+            
+            # Calculate piece dimensions
+            piece_width = 400 // difficulty
+            piece_height = 400 // difficulty
             
             pieces = []
-            piece_size = 400 // grid_size
-            
-            # Create pieces
-            for row in range(grid_size):
-                for col in range(grid_size):
-                    left = col * piece_size
-                    top = row * piece_size
-                    right = left + piece_size
-                    bottom = top + piece_size
-                    
+            for row in range(difficulty):
+                for col in range(difficulty):
                     # Extract piece
+                    left = col * piece_width
+                    top = row * piece_height
+                    right = left + piece_width
+                    bottom = top + piece_height
+                    
                     piece = image.crop((left, top, right, bottom))
-                    piece_data = self.image_to_base64(piece)
+                    
+                    # Convert to base64
+                    buffer = io.BytesIO()
+                    piece.save(buffer, format='JPEG', quality=95)
+                    piece_str = base64.b64encode(buffer.getvalue()).decode()
                     
                     pieces.append({
-                        'id': row * grid_size + col,
-                        'row': row,
-                        'col': col,
-                        'data': piece_data,
-                        'correct_position': row * grid_size + col
+                        'id': row * difficulty + col,
+                        'correct_position': row * difficulty + col,
+                        'image': f"data:image/jpeg;base64,{piece_str}"
                     })
             
-            # Shuffle pieces
+            # Shuffle pieces (but keep track of correct positions)
             shuffled_pieces = pieces.copy()
             random.shuffle(shuffled_pieces)
             
-            # Assign shuffled positions
+            # Reassign IDs to shuffled positions
             for i, piece in enumerate(shuffled_pieces):
                 piece['current_position'] = i
             
             return {
                 'pieces': shuffled_pieces,
-                'original_image': self.image_to_base64(image),
-                'grid_size': grid_size,
-                'total_pieces': len(pieces)
+                'difficulty': difficulty,
+                'total_pieces': len(pieces),
+                'piece_size': {'width': piece_width, 'height': piece_height}
             }
             
         except Exception as e:
-            print(f"Error creating puzzle pieces: {e}")
+            print(f"Error creating puzzle: {str(e)}")
             return None
 
-# Initialize puzzle generator
+# Initialize the generator
 puzzle_generator = JigsawGenerator()
 
 @app.route('/')
 def index():
-    """Serve the main puzzle page"""
+    """Serve the main puzzle interface"""
     return render_template('index.html')
-
-@app.route('/api/debug')
-def debug_info():
-    """Debug endpoint to check file system"""
-    root_path = os.path.dirname(os.path.abspath(__file__))
-    seed_folder = os.path.join(root_path, 'seed_images')
-    
-    debug_data = {
-        'root_path': root_path,
-        'seed_folder': seed_folder,
-        'current_directory': os.getcwd(),
-        'seed_folder_exists': os.path.exists(seed_folder),
-        'seed_images_count': len(puzzle_generator.seed_images),
-        'image_names': [img['name'] for img in puzzle_generator.seed_images],
-        'root_contents': os.listdir(root_path)
-    }
-    
-    if os.path.exists(seed_folder):
-        debug_data['seed_folder_contents'] = os.listdir(seed_folder)
-    
-    return jsonify(debug_data)
 
 @app.route('/api/seed-images')
 def get_seed_images():
     """Get all available seed images"""
-    try:
-        images = []
-        for img in puzzle_generator.seed_images:
-            images.append({
-                'name': img['name'],
-                'data': img['data']
-            })
-        
-        print(f"Serving {len(images)} seed images to frontend")
-        return jsonify({'images': images})
-        
-    except Exception as e:
-        print(f"Error in get_seed_images: {e}")
-        return jsonify({'images': []}), 500
+    return jsonify({
+        'images': puzzle_generator.seed_images,
+        'count': len(puzzle_generator.seed_images)
+    })
 
-@app.route('/api/create-puzzle/<int:image_index>')
-def create_puzzle(image_index):
-    """Create a new puzzle from selected seed image"""
+@app.route('/api/create-puzzle', methods=['POST'])
+def create_puzzle():
+    """Create a new puzzle from selected image"""
     try:
-        print(f"Creating puzzle for image index: {image_index}")
+        from flask import request
+        data = request.get_json()
+        image_data = data.get('imageData')
+        difficulty = data.get('difficulty', 6)  # Always expert (6x6)
         
-        if 0 <= image_index < len(puzzle_generator.seed_images):
-            selected_image = puzzle_generator.seed_images[image_index]
-            puzzle_data = puzzle_generator.create_puzzle_pieces(selected_image['data'], grid_size=6)
-            
-            if puzzle_data:
-                print(f"✓ Puzzle created successfully for: {selected_image['name']}")
-                return jsonify({
-                    'success': True,
-                    'puzzle': puzzle_data,
-                    'image_name': selected_image['name']
-                })
-            else:
-                print("✗ Failed to create puzzle data")
-                return jsonify({'success': False, 'error': 'Failed to create puzzle'}), 500
+        if not image_data:
+            return jsonify({'error': 'No image data provided'}), 400
+        
+        puzzle_data = puzzle_generator.create_puzzle(image_data, difficulty)
+        if puzzle_data:
+            return jsonify(puzzle_data)
         else:
-            print(f"✗ Invalid image index: {image_index} (available: 0-{len(puzzle_generator.seed_images)-1})")
-            return jsonify({'success': False, 'error': 'Invalid image selection'}), 400
+            return jsonify({'error': 'Failed to create puzzle'}), 500
             
     except Exception as e:
-        print(f"Error in create_puzzle: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"Error in create_puzzle: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/debug')
+def debug_info():
+    """Debug endpoint to check file system and image loading"""
+    debug_info = {
+        'app_root_path': app.root_path,
+        'current_working_directory': os.getcwd(),
+        'files_in_root': [],
+        'seed_images_found': len(puzzle_generator.seed_images),
+        'paths_checked': []
+    }
+    
+    # Check root directory
+    try:
+        debug_info['files_in_root'] = os.listdir(app.root_path)
+    except:
+        debug_info['files_in_root'] = ['Error reading root directory']
+    
+    # Check possible image paths
+    possible_paths = [
+        os.path.join(app.root_path, 'seed_images'),
+        os.path.join(app.root_path, 'static', 'seed_images'),
+        os.path.join(app.root_path, 'static', 'images')
+    ]
+    
+    for path in possible_paths:
+        path_info = {
+            'path': path,
+            'exists': os.path.exists(path),
+            'files': []
+        }
+        
+        if os.path.exists(path):
+            try:
+                path_info['files'] = os.listdir(path)
+            except:
+                path_info['files'] = ['Error reading directory']
+        
+        debug_info['paths_checked'].append(path_info)
+    
+    return jsonify(debug_info)
+
+# Route to serve images from seed_images folder
+@app.route('/seed_images/<filename>')
+def serve_seed_image(filename):
+    """Serve images from seed_images folder"""
+    seed_images_path = os.path.join(app.root_path, 'seed_images')
+    if os.path.exists(seed_images_path):
+        return send_from_directory(seed_images_path, filename)
+    else:
+        return "Image not found", 404
 
 if __name__ == '__main__':
     print("Starting Jigsaw Puzzle App...")
-    print(f"Available images: {len(puzzle_generator.seed_images)}")
+    print(f"Looking for seed images in: {os.path.join(app.root_path, 'seed_images')}")
     app.run(debug=True, host='0.0.0.0', port=5000)
