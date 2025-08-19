@@ -13,19 +13,17 @@ class JigsawGenerator:
     def __init__(self):
         self.seed_images = self.generate_seed_images()
     
-    def load_static_images(self):
-        """Load images from static/seed_images folder"""
+    def load_seed_images_from_root(self):
+        """Load images from seed_images folder in root directory"""
         seed_images = []
         
-        # Get the static folder path
-        static_folder = os.path.join(app.root_path, 'static')
-        seed_folder = os.path.join(static_folder, 'seed_images')
+        # Path to seed_images folder in root directory
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        seed_folder = os.path.join(root_path, 'seed_images')
         
-        print(f"=== LOADING STATIC IMAGES ===")
-        print(f"App root path: {app.root_path}")
-        print(f"Static folder: {static_folder}")
+        print(f"=== LOADING SEED IMAGES FROM ROOT ===")
+        print(f"Root path: {root_path}")
         print(f"Seed folder: {seed_folder}")
-        print(f"Static folder exists: {os.path.exists(static_folder)}")
         print(f"Seed folder exists: {os.path.exists(seed_folder)}")
         
         if os.path.exists(seed_folder):
@@ -50,7 +48,7 @@ class JigsawGenerator:
                             # Resize to 400x400
                             img = img.resize((400, 400), Image.Resampling.LANCZOS)
                             
-                            # Create display name
+                            # Create display name from filename
                             name = os.path.splitext(filename)[0]
                             name = name.replace('-', ' ').replace('_', ' ').title()
                             
@@ -68,49 +66,60 @@ class JigsawGenerator:
                 print(f"Error reading seed folder: {e}")
         else:
             print(f"Seed folder not found: {seed_folder}")
-            if os.path.exists(static_folder):
-                print(f"Static folder contents: {os.listdir(static_folder)}")
+            print(f"Available files in root: {os.listdir(root_path)}")
         
-        print(f"Total static images loaded: {len(seed_images)}")
+        print(f"Total seed images loaded: {len(seed_images)}")
         return seed_images
     
     def create_fallback_images(self):
-        """Create colorful fallback images if no static images found"""
+        """Create beautiful fallback images if no seed images found"""
         print("Creating fallback images...")
         fallback_images = []
         
-        # Gradient patterns
+        # Beautiful gradient configurations
         gradients = [
             {
                 'name': 'Ocean Sunset',
-                'colors': [(255, 107, 107), (76, 175, 196), (168, 85, 247)],
+                'colors': [(255, 154, 158), (250, 208, 196), (255, 206, 84), (255, 238, 173)],
             },
             {
-                'name': 'Forest Dawn',
-                'colors': [(168, 230, 207), (255, 217, 61), (74, 222, 128)],
+                'name': 'Forest Mystic',
+                'colors': [(168, 230, 207), (220, 237, 193), (255, 211, 182), (255, 170, 165)],
             },
             {
-                'name': 'Purple Dream',
-                'colors': [(196, 181, 253), (255, 182, 193), (147, 197, 253)],
+                'name': 'Purple Dreams',
+                'colors': [(196, 181, 253), (255, 182, 193), (147, 197, 253), (199, 210, 254)],
             },
             {
-                'name': 'Warm Glow',
-                'colors': [(251, 191, 36), (248, 113, 113), (252, 231, 243)],
+                'name': 'Golden Hour',
+                'colors': [(251, 191, 36), (248, 113, 113), (252, 231, 243), (254, 240, 138)],
+            },
+            {
+                'name': 'Coral Reef',
+                'colors': [(255, 107, 107), (255, 159, 67), (255, 206, 84), (72, 219, 251)],
+            },
+            {
+                'name': 'Zen Garden',
+                'colors': [(134, 239, 172), (187, 247, 208), (254, 240, 138), (252, 211, 77)],
             }
         ]
         
         for grad in gradients:
-            image = self.create_gradient_image(grad['colors'], grad['name'])
-            fallback_images.append({
-                'name': grad['name'],
-                'image': image,
-                'data': self.image_to_base64(image)
-            })
+            try:
+                image = self.create_gradient_image(grad['colors'], grad['name'])
+                fallback_images.append({
+                    'name': grad['name'],
+                    'image': image,
+                    'data': self.image_to_base64(image)
+                })
+                print(f"✓ Created fallback: {grad['name']}")
+            except Exception as e:
+                print(f"✗ Error creating {grad['name']}: {e}")
         
         return fallback_images
     
     def create_gradient_image(self, colors, name):
-        """Create a radial gradient image"""
+        """Create a beautiful radial gradient image"""
         image = Image.new('RGB', (400, 400))
         
         center_x, center_y = 200, 200
@@ -144,15 +153,15 @@ class JigsawGenerator:
         return image
     
     def generate_seed_images(self):
-        """Load images from static folder, fallback to generated images"""
-        # Try to load static images first
-        static_images = self.load_static_images()
+        """Load images from root seed_images folder, fallback to generated images"""
+        # Try to load seed images from root directory first
+        seed_images = self.load_seed_images_from_root()
         
-        if static_images:
-            print(f"Using {len(static_images)} static images")
-            return static_images
+        if seed_images:
+            print(f"Using {len(seed_images)} seed images from root folder")
+            return seed_images
         else:
-            print("No static images found, using fallback images")
+            print("No seed images found in root folder, using fallback images")
             return self.create_fallback_images()
     
     def image_to_base64(self, image):
@@ -232,20 +241,21 @@ def index():
 @app.route('/api/debug')
 def debug_info():
     """Debug endpoint to check file system"""
+    root_path = os.path.dirname(os.path.abspath(__file__))
+    seed_folder = os.path.join(root_path, 'seed_images')
+    
     debug_data = {
-        'app_root_path': app.root_path,
+        'root_path': root_path,
+        'seed_folder': seed_folder,
         'current_directory': os.getcwd(),
-        'static_folder_exists': os.path.exists(os.path.join(app.root_path, 'static')),
+        'seed_folder_exists': os.path.exists(seed_folder),
         'seed_images_count': len(puzzle_generator.seed_images),
-        'image_names': [img['name'] for img in puzzle_generator.seed_images]
+        'image_names': [img['name'] for img in puzzle_generator.seed_images],
+        'root_contents': os.listdir(root_path)
     }
     
-    static_path = os.path.join(app.root_path, 'static')
-    if os.path.exists(static_path):
-        debug_data['static_contents'] = os.listdir(static_path)
-        seed_path = os.path.join(static_path, 'seed_images')
-        if os.path.exists(seed_path):
-            debug_data['seed_images_contents'] = os.listdir(seed_path)
+    if os.path.exists(seed_folder):
+        debug_data['seed_folder_contents'] = os.listdir(seed_folder)
     
     return jsonify(debug_data)
 
