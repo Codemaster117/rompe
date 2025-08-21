@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Jigsaw Puzzle</title>
+    <title>Rompecabezas Toxico</title>
     <style>
         * {
             margin: 0;
@@ -261,24 +261,24 @@
 </head>
 <body>
     <div class="container">
-        <h1>🧩 Interactive Jigsaw Puzzle</h1>
+        <h1>🧩 Rompecabezas Toxico</h1>
         
         <!-- Image Selection Section -->
         <div class="game-section">
-            <h2>Choose Your Puzzle Image</h2>
+            <h2>Elige tu Imagen</h2>
             <div class="controls">
-                <button class="btn" onclick="loadImages()">🔄 Refresh Images</button>
-                <button class="btn" onclick="testAPI()">🔧 Test Connection</button>
+                <button class="btn" onclick="loadImages()">🔄Cargar Imagenes</button>
+                <button class="btn" onclick="testAPI()">🔧Probar conexion</button>
             </div>
-            <div id="imageSelection" class="loading">Loading images...</div>
+            <div id="imageSelection" class="loading">Cargando Imagenes...</div>
         </div>
 
         <!-- Game Controls -->
         <div class="game-section">
             <div class="controls">
-                <button id="startBtn" class="btn" onclick="startPuzzle()" disabled>🎮 Start Puzzle</button>
-                <button id="newGameBtn" class="btn" onclick="newGame()" style="display: none;">🎲 New Game</button>
-                <button class="btn" onclick="showSolution()">👁️ Show Solution</button>
+                <button id="startBtn" class="btn" onclick="startPuzzle()" disabled>🎮Comenzemos</button>
+                <button id="newGameBtn" class="btn" onclick="newGame()" style="display: none;">🎲Nueva Partida</button>
+                <button class="btn" onclick="showSolution()">👁️Una Ayuda?</button>
             </div>
         </div>
 
@@ -293,15 +293,15 @@
                 
                 <div class="game-stats">
                     <div class="stat-row">
-                        <span>⏱️ Time:</span>
+                        <span>⏱️ Tiempo:</span>
                         <span id="timeDisplay">00:00</span>
                     </div>
                     <div class="stat-row">
-                        <span>🎯 Moves:</span>
+                        <span>🎯 Movimientos:</span>
                         <span id="movesDisplay">0</span>
                     </div>
                     <div class="stat-row">
-                        <span>✅ Progress:</span>
+                        <span>✅ Progreso:</span>
                         <span id="progressDisplay">0%</span>
                     </div>
                     <div class="progress-bar">
@@ -317,10 +317,10 @@
 
     <!-- Celebration Modal -->
     <div id="celebration" class="celebration">
-        <h2>🎉 Congratulations!</h2>
-        <p>You completed the puzzle!</p>
+        <h2>🎉 Bravooo!</h2>
+        <p>Lo Lograste!</p>
         <div id="finalStats"></div>
-        <button class="btn" onclick="hideCelebration()">Close</button>
+        <button class="btn" onclick="hideCelebration()">Cerrar</button>
     </div>
 
     <script>
@@ -404,7 +404,7 @@
                     <div class="error">
                         <strong>Failed to load images:</strong> ${error.message}
                         <br><br>
-                        <button class="btn" onclick="loadImages()">🔄 Try Again</button>
+                        <button class="btn" onclick="loadImages()">🔄 Volver a intentar</button>
                     </div>
                 `;
             }
@@ -447,11 +447,11 @@
 
         function startPuzzle() {
             if (!selectedImage) {
-                showStatus('❌ Please select an image first!', 'error');
+                showStatus('❌No has seleccionado una Imagen!', 'error');
                 return;
             }
 
-            console.log('Starting puzzle with:', selectedImage.name);
+            console.log('COmenzando con:', selectedImage.name);
             
             // Show game area
             document.getElementById('gameArea').style.display = 'flex';
@@ -468,7 +468,7 @@
             document.getElementById('startBtn').style.display = 'none';
             document.getElementById('newGameBtn').style.display = 'inline-block';
             
-            showStatus('🎮 Puzzle started! Click pieces to swap them.', 'success');
+            showStatus('🎮 En marcha, haz clic a las piezas para intercambiarlas', 'success');
         }
 
         function createPuzzle() {
@@ -619,7 +619,7 @@
         }
 
         function showSolution() {
-            if (confirm('This will show the solution and end the current game. Continue?')) {
+            if (confirm('Esto acabara la partida y mostrara una ayuda, Estas Seguro?')) {
                 // Reset all pieces to correct positions
                 puzzlePieces.forEach((piece, index) => {
                     const correctRow = parseInt(piece.dataset.correctRow);
@@ -633,7 +633,7 @@
                 
                 clearInterval(gameTimer);
                 updateProgress();
-                showStatus('🎯 Solution revealed!', 'success');
+                showStatus('🎯 Respesta Soplada', 'success');
             }
         }
 
@@ -697,3 +697,4 @@
     </script>
 </body>
 </html>
+
